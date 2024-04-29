@@ -28,8 +28,7 @@ public class WarehouseController : ControllerBase
         using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default")))
         {
             await connection.OpenAsync();
-
-            // Step 1: Check if the order has been fulfilled
+            
             SqlCommand fulfilledCommand = new SqlCommand("SELECT COUNT(*) FROM [Order] WHERE IdProduct = @IdProduct AND Amount = @Amount AND CreatedAt < @CreatedAt AND FulfilledAt IS NOT NULL", connection);
             fulfilledCommand.Parameters.AddWithValue("@IdProduct", request.IdProduct);
             fulfilledCommand.Parameters.AddWithValue("@Amount", request.Amount);
@@ -40,8 +39,7 @@ public class WarehouseController : ControllerBase
             {
                 return BadRequest("Order for the specified product does not exist or was created after the request.");
             }
-
-            // Step 2: Check if the order already exists in Product_Warehouse
+            
             SqlCommand existingOrderCommand = new SqlCommand("SELECT COUNT(*) FROM Product_Warehouse WHERE IdProduct = @IdProduct", connection);
             existingOrderCommand.Parameters.AddWithValue("@IdProduct", request.IdProduct);
             int existingOrderCount = (int)await existingOrderCommand.ExecuteScalarAsync();
@@ -50,8 +48,7 @@ public class WarehouseController : ControllerBase
             {
                 return BadRequest("Order already exists in Product_Warehouse.");
             }
-
-            // Step 3: Insert a new record into Product_Warehouse
+            
             SqlCommand insertCommand = new SqlCommand("INSERT INTO Product_Warehouse (IdProduct, IdWarehouse, Amount, Price, CreatedAt) VALUES (@IdProduct, @IdWarehouse, @Amount, @Price, GETDATE()); SELECT SCOPE_IDENTITY();", connection);
             insertCommand.Parameters.AddWithValue("@IdProduct", request.IdProduct);
             insertCommand.Parameters.AddWithValue("@IdWarehouse", request.IdWarehouse);
